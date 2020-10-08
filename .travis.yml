@@ -8,8 +8,19 @@ script:
 - cmake --build .
 - cmake --build . --target test
 - cmake --build . --target package
+#deploy:
+#  provider: script
+#  skip_cleanup: true
+#  script:
+#  - curl -T helloworld-0.0.$TRAVIS_BUILD_NUMBER-Linux.deb -usam002:$BINTRAY_API_KEY "https://api.bintray.com/content/sam002/otus-cpp/helloworld/$TRAVIS_BUILD_NUMBER/helloworld-0.0.$TRAVIS_BUILD_NUMBER-Linux.deb;deb_distribution=trusty;deb_component=main;deb_architecture=amd64;publish=1"
 deploy:
-  provider: script
-  skip_cleanup: true
-  script:
-  - curl -T helloworld-0.0.$TRAVIS_BUILD_NUMBER-Linux.deb -usam002:$BINTRAY_API_KEY "https://api.bintray.com/content/sam002/otus-cpp/helloworld/$TRAVIS_BUILD_NUMBER/helloworld-0.0.$TRAVIS_BUILD_NUMBER-Linux.deb;deb_distribution=trusty;deb_component=main;deb_architecture=amd64;publish=1"
+  provider: bintray
+  user: sam002
+  key: $BINTRAY_API_KEY
+  file: helloworld-0.0.$TRAVIS_BUILD_NUMBER-Linux.deb
+  repo: otus-cpp
+  name: helloworld
+  subject: sam002
+  skip_cleanup: true # to upload artifacts created during the build
+  on:
+    all_branches: true
