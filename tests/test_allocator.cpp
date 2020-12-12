@@ -9,7 +9,7 @@ BOOST_AUTO_TEST_SUITE(test_allocator)
 
     BOOST_AUTO_TEST_CASE(test_const_memory)
     {
-        auto tempContainer = container<int, custom_allocator<element<int>, 3>>{};
+        auto tempContainer = container<int, CustomAllocator<element<int>, 3>>{};
         for (int i = 0; i < 10; i++) {
             tempContainer.push((i));
         }

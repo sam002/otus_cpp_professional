@@ -10,15 +10,15 @@ int factorial(int i) {
 
 void exmpleMap() {
     auto tempMap = std::map<int, int>{};
-    for (int i = 0; i < 100; i++) {
+    for (int i = 0; i < 10; i++) {
         tempMap[i] = factorial(i);
     }
     tempMap.clear();
 }
 
 void exmpleMapWithAllocator() {
-    auto tempMap = std::map<int, int, std::less<int>, custom_allocator<std::pair<const int, int>, 6>>{};
-    for (int i = 0; i < 100; i++) {
+    auto tempMap = std::map<int, int, std::less<int>, CustomAllocator<std::pair<const int, int>, 10>>{};
+    for (int i = 0; i < 10; i++) {
         tempMap[i] = factorial(i);
     }
     for (const auto &item : tempMap) {
@@ -29,14 +29,14 @@ void exmpleMapWithAllocator() {
 
 void exmpleContainer() {
     auto tempContainer = container<int>{};
-    for (int i = 0; i < 100; i++) {
+    for (int i = 0; i < 10; i++) {
         tempContainer.push(factorial(i));
     }
     tempContainer.clear();
 }
 
 void exmpleContainerWithAllocator() {
-    auto tempContainer = container<int, custom_allocator<element<int>, 3>>{};
+    auto tempContainer = container<int, CustomAllocator<element<int>, 10>>{};
     for (int i = 0; i < 10; i++) {
         tempContainer.push((i));
     }
