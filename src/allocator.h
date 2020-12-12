@@ -28,7 +28,7 @@ public:
     {
         memcpy(memory_pool, other.memory_pool, other.pool_size*sizeof(T));
         use_pool_mask.assign(other.use_pool_mask.front(), other.use_pool_mask.back());
-        current_ptr += other.pool_size;
+        current_ptr += other.pool_size - 1;
     }
 
     ~MemoryManagement()
@@ -74,13 +74,13 @@ public:
     // Needed for std::allocator_traits
     using value_type = T;
 private:
-    std::unique_ptr<MemoryManagement<T>> manager;
+    std::vector<std::unique_ptr<MemoryManagement<T>>> managers;
     size_t pool_size = PoolSize;
 
 public:
     explicit CustomAllocator(size_t size) : pool_size(size)
     {
-        manager = std::make_unique<MemoryManagement<T>>(size);
+        managers.push_back(std::make_unique<MemoryManagement<T>>(size));
     }
 
     // Needed for std::allocator_traits
@@ -93,22 +93,26 @@ public:
     template<typename U, size_t OtherDefaultSize>
     CustomAllocator(const CustomAllocator<U, OtherDefaultSize> & alloc)
     {
-        manager = alloc.manager;
+        //todo need full copy
+        managers = alloc.managers;
     }
 
     ~CustomAllocator()
     {
-        manager.release();
+        for (auto &manager :managers) {
+            manager.release();
+        }
+        managers.clear();
     }
 
     // Needed for std::allocator_traits
     T * allocate(size_t size)
     {
-        if (!manager->can_hold(size)) {
+        if (!managers.back()->can_hold(size)) {
             pool_size *= 2;
-            manager.reset(new MemoryManagement<T>((const MemoryManagement<T> &)*manager.get(), pool_size));
+            managers.push_back(std::make_unique<MemoryManagement<T>>(pool_size));
         }
-        T * ptr = static_cast<T *>(manager->custom_malloc(size));
+        T * ptr = static_cast<T *>(managers.back()->custom_malloc(size));
         if (ptr == NULL && size > 0) {
             throw std::bad_alloc();
         }
@@ -118,7 +122,7 @@ public:
     // Needed for std::allocator_traits
     void deallocate(T * ptr, size_t size)
     {
-        manager->custom_deallocate(ptr, size);
+        managers.back()->custom_deallocate(ptr, size);
     }
 
     template<typename U>
