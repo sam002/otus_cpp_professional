@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <string>
 #include <vector>
+#include <iterator>
 
 template<typename T>
 struct element {
@@ -11,7 +12,7 @@ struct element {
 };
 
 template<typename T, class Allocator = std::allocator<element<T>>>
-class container {
+class CustomContainer {
     template<typename U>
     class _iterator : public std::iterator<std::input_iterator_tag, U> {
     public:
@@ -42,17 +43,26 @@ class container {
     element<T> *end_el = nullptr;
 
 public:
-
+    using value_type = T;
+    using reference = T&;
+    using const_reference = const T&;
     using iterator = _iterator<element<T>>;
+    using const_iterator = const iterator;
+    using difference_type = std::ptrdiff_t;
+    using size_type = std::size_t;
 
-    container(std::initializer_list<T> values) {
-        for (auto value : values)
+    CustomContainer() = default;
+
+    CustomContainer(std::initializer_list<T> values) {
+        for (auto value : values) {
             push(value);
-    }
+        }
+    };
 
-    ~container() {
-        while (count)
+    ~CustomContainer() {
+        while (count) {
             pop();
+        }
     }
 
     void push(T data) {
@@ -62,11 +72,17 @@ public:
         end_el = *ptr;
 
         count++;
-    }
+    };
+
+    void push_back(T data)
+    {
+        push(data);
+    };
 
     void pop() {
-        if (!count)
+        if (!count) {
             return;
+        }
 
         count--;
 

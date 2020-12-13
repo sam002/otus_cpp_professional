@@ -5,30 +5,24 @@
 #include <stdexcept>
 #include <memory>
 #include <vector>
+#include <numeric>
+#include <algorithm>
 
 template<typename T>
 class MemoryManagement
 {
 public:
     const size_t pool_size = 0;
+private:
     char * memory_pool = nullptr;
-    T * current_ptr = nullptr;
     std::vector<bool> use_pool_mask;
 
+public:
     explicit MemoryManagement(size_t pool_size_) : pool_size(pool_size_)
     {
         memory_pool = new char[pool_size*sizeof(T)];
         memset(memory_pool, 0, pool_size*sizeof(T));
-        current_ptr = (T *)memory_pool;
         use_pool_mask = std::vector<bool>(pool_size, false);
-    }
-
-    template<typename U>
-    MemoryManagement(const MemoryManagement<U> & other, size_t pool_size_) : MemoryManagement(pool_size_)
-    {
-        memcpy(memory_pool, other.memory_pool, other.pool_size*sizeof(T));
-        use_pool_mask.assign(other.use_pool_mask.front(), other.use_pool_mask.back());
-        current_ptr += other.pool_size - 1;
     }
 
     ~MemoryManagement()
@@ -39,10 +33,12 @@ public:
 
     T * custom_malloc(size_t size) {
         if(1 > size) {
-            return nullptr;
+            throw std::bad_alloc();
         }
-        current_ptr += size;
-        return current_ptr - size;
+        auto free_ptr = std::search_n(use_pool_mask.begin(), use_pool_mask.end(), size, false);
+        auto ptr = (T *)(memory_pool + (sizeof(T))*free_ptr._M_offset);
+        *free_ptr = true;
+        return ptr;
     }
 
     void custom_deallocate(T * ptr, size_t size)
@@ -54,16 +50,14 @@ public:
         }
     }
 
-    bool can_hold(size_t need_size) {
-        return pool_size_allow() >= need_size;
+    bool can_hold(size_t need_size)
+    {
+        return use_pool_mask.end() != std::search_n(use_pool_mask.begin(), use_pool_mask.end(), need_size, false);
     }
 
-    size_t pool_size_allow() {
-        auto free = this->pool_size - (((unsigned long long)current_ptr - (unsigned long long)memory_pool)/sizeof(T));
-        if (free<0) {
-            throw std::runtime_error("memory corrupting");
-        }
-        return free;
+    bool in_pool(T const * ptr)
+    {
+        return  ptr >= (T *)memory_pool && ptr <= ((T *)memory_pool + pool_size);
     }
 };
 
@@ -75,10 +69,9 @@ public:
     using value_type = T;
 private:
     std::vector<std::unique_ptr<MemoryManagement<T>>> managers;
-    size_t pool_size = PoolSize;
 
 public:
-    explicit CustomAllocator(size_t size) : pool_size(size)
+    explicit CustomAllocator(size_t size)
     {
         managers.push_back(std::make_unique<MemoryManagement<T>>(size));
     }
@@ -108,21 +101,28 @@ public:
     // Needed for std::allocator_traits
     T * allocate(size_t size)
     {
-        if (!managers.back()->can_hold(size)) {
-            pool_size *= 2;
-            managers.push_back(std::make_unique<MemoryManagement<T>>(pool_size));
+
+        for (std::unique_ptr<MemoryManagement<T>> &manager : managers) {
+            if (manager->can_hold(size)) {
+                return static_cast<T *>(manager->custom_malloc(size));
+            }
         }
-        T * ptr = static_cast<T *>(managers.back()->custom_malloc(size));
-        if (ptr == NULL && size > 0) {
-            throw std::bad_alloc();
-        }
-        return ptr;
+        managers.push_back(std::make_unique<MemoryManagement<T>>(managers.back()->pool_size*2));
+
+        return static_cast<T *>(managers.back()->custom_malloc(size));
     }
 
     // Needed for std::allocator_traits
     void deallocate(T * ptr, size_t size)
     {
-        managers.back()->custom_deallocate(ptr, size);
+        for (std::unique_ptr<MemoryManagement<T>> &manager :managers) {
+            if (manager->in_pool(ptr)) {
+                manager->custom_deallocate(ptr, size);
+            }
+        }
+        if (managers.back()->can_hold(managers.back()->pool_size)) {
+            managers.pop_back();
+        }
     }
 
     template<typename U>
