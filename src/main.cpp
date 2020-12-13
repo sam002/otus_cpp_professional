@@ -1,57 +1,18 @@
 #include <iostream>
 #include <map>
-#include <cmath>
-#include "allocator.h"
-#include "container.h"
-
-int factorial(int i) {
-    return (int) tgamma(i + 1);
-}
-
-void exmpleMap() {
-    auto tempMap = std::map<int, int>{};
-    for (int i = 0; i < 10; i++) {
-        tempMap[i] = factorial(i);
-    }
-    tempMap.clear();
-}
-
-void exmpleMapWithAllocator() {
-    auto tempMap = std::map<int, int, std::less<>, CustomAllocator<std::pair<const int, int>>>{};
-    for (int i = 0; i < 10; i++) {
-        tempMap[i] = factorial(i);
-    }
-    for (const auto &item : tempMap) {
-        std::cout << item.first << " " << item.second << std::endl;
-    }
-    tempMap.clear();
-}
-
-void exmpleContainer() {
-    auto tempContainer = CustomContainer<int>{};
-    for (int i = 0; i < 10; i++) {
-        tempContainer.push(factorial(i));
-    }
-    tempContainer.clear();
-}
-
-void exmpleContainerWithAllocator() {
-    auto tempContainer = CustomContainer<int, CustomAllocator<element<int>, 10>>{};
-    for (int i = 0; i < 10; i++) {
-        tempContainer.push((i));
-    }
-    for (const auto &item : tempContainer) {
-        std::cout << item.data << std::endl;
-    }
-    tempContainer.clear();
-}
+#include <list>
+#include "print_ip.h"
 
 int main() {
     try {
-        exmpleMap();
-        exmpleMapWithAllocator();
-        exmpleContainer();
-        exmpleContainerWithAllocator();
+        std::cout << print_ip(char(-1)) << std::endl;
+        std::cout << print_ip(short(0)) << std::endl;
+        std::cout << print_ip(int(2130706433)) << std::endl;
+        std::cout << print_ip(long(8875824491850138409)) << std::endl  << std::endl;
+
+//        std::cout << print_ip(std::string{"1.12.123.234"}) << std::endl;
+//        std::cout << print_ip(std::vector<int>{1,2,3,4}) << std::endl;
+//        std::cout << print_ip(std::list<int>{2,3,4,5}) << std::endl;
     }
     catch (const std::exception &e) {
         std::cerr << e.what() << std::endl;
