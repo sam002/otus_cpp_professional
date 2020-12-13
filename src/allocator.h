@@ -9,10 +9,9 @@
 #include <algorithm>
 
 template<typename T>
-class MemoryManagement
-{
+class MemoryManagement {
 public:
-    const size_t pool_size = 0;
+    size_t pool_size = 0;
 private:
     char * memory_pool = nullptr;
     std::vector<bool> use_pool_mask;
@@ -62,8 +61,7 @@ public:
 };
 
 template<typename T, size_t PoolSize = 2>
-class CustomAllocator
-{
+class CustomAllocator {
 public:
     // Needed for std::allocator_traits
     using value_type = T;
