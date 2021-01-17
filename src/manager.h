@@ -34,7 +34,7 @@ public:
 
     ~MemoryManagement()
     {
-        delete memory_pool;
+        delete [] memory_pool;
         use_pool_mask.clear();
     }
 

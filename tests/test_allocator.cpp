@@ -27,4 +27,21 @@ BOOST_AUTO_TEST_SUITE(test_allocator)
             BOOST_CHECK_EQUAL(firstContainer.size(), secondContainer.size());
         }
     }
+
+
+    BOOST_AUTO_TEST_CASE(test_complex_container)
+    {
+        auto firstContainer = CustomContainer<std::vector<int>, CustomAllocator<element<std::vector<int>>, 2>>{};
+        for (int i = 0; i < 100; i++) {
+            auto elem = std::vector<int>();
+            for (int j = i; j > 0; j--) {
+                elem.emplace_back(j);
+            }
+            BOOST_CHECK_NO_THROW(firstContainer.push_back(elem));
+        }
+
+        for (int i = 5; i < 50; i++) {
+            BOOST_CHECK_NO_THROW(firstContainer.pop());
+        }
+    }
 }

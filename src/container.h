@@ -103,12 +103,14 @@ public:
         if (count) {
             return front_el->data;
         }
+        std::unexpected();
     }
 
     T back() {
         if (count) {
             return end_el->data;
         }
+        std::unexpected();
     }
 
     iterator begin() {
